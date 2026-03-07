@@ -193,6 +193,39 @@ def reactivate_user(request, user_id):
     return Response({'success': True})
 
 
+@api_view(['PUT'])
+def update_user(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    data = request.data
+    if 'name' in data:
+        user.name = data['name']
+    if 'role' in data and data['role'] in dict(User.ROLE_CHOICES):
+        user.role = data['role']
+    if 'status' in data and data['status'] in dict(User.STATUS_CHOICES):
+        user.status = data['status']
+    
+    user.save()
+    return Response(UserSerializer(user).data)
+
+
+@api_view(['DELETE'])
+def delete_user(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    if user.role == 'admin':
+        return Response({'error': 'Cannot delete an admin user.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    user.delete()
+    return Response({'success': True})
+
+
 # ─────────────────────── PRODUCTS ───────────────────────
 
 @api_view(['GET'])
@@ -265,6 +298,60 @@ def create_product(request):
         is_flash_sale=False,
     )
     return Response({'_id': str(product.id)}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PUT'])
+def update_product(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    data = request.data
+    if 'name' in data:
+        product.name = data['name']
+    if 'description' in data:
+        product.description = data['description']
+    if 'shortDescription' in data:
+        product.short_description = data['shortDescription']
+    if 'price' in data:
+        product.price = float(data['price'])
+    if 'originalPrice' in data:
+        product.original_price = data['originalPrice']
+    if 'images' in data:
+        product.images = data['images']
+    if 'category' in data:
+        product.category = data['category']
+    if 'brand' in data:
+        product.brand = data['brand']
+    if 'series' in data:
+        product.series = data['series']
+    if 'condition' in data:
+        product.condition = data['condition']
+    if 'stock' in data:
+        product.stock = int(data['stock'])
+    if 'tags' in data:
+        product.tags = data['tags']
+    if 'isFeatured' in data:
+        product.is_featured = bool(data['isFeatured'])
+    if 'isFlashSale' in data:
+        product.is_flash_sale = bool(data['isFlashSale'])
+    if 'flashSaleEnd' in data:
+        product.flash_sale_end = data['flashSaleEnd']
+    
+    product.save()
+    return Response(ProductSerializer(product).data)
+
+
+@api_view(['DELETE'])
+def delete_product(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    product.delete()
+    return Response({'success': True})
 
 
 # ─────────────────────── CART ───────────────────────
@@ -402,6 +489,22 @@ def orders_by_user(request):
         return Response({'error': 'userId is required.'}, status=status.HTTP_400_BAD_REQUEST)
     orders = Order.objects.filter(user_id=user_id).order_by('-created_at')[:50]
     return Response(OrderSerializer(orders, many=True).data)
+
+
+@api_view(['PUT'])
+def update_order_status(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    new_status = request.data.get('status')
+    if new_status not in dict(Order.STATUS_CHOICES):
+        return Response({'error': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    order.status = new_status
+    order.save()
+    return Response(OrderSerializer(order).data)
 
 
 # ─────────────────────── SEED ───────────────────────
