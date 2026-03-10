@@ -16,6 +16,7 @@ export default function CartPage() {
     const { user } = useAuth();
     const [toast, setToast] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [cartItems, setCartItems] = useState<CartItem[] | undefined>(undefined);
 
     const fetchCart = useCallback(() => {
@@ -59,14 +60,34 @@ export default function CartPage() {
     const shippingFee = subtotal > 5000 ? 0 : 150;
     const total = subtotal + shippingFee;
 
+    const filteredCartItems = cartItems?.filter((item) => {
+        if (!item.product) return false;
+
+        // Category filter
+        if (activeCategory && item.product.category !== activeCategory) {
+            return false;
+        }
+
+        // Search filter
+        if (searchTerm.trim().length > 0) {
+            const term = searchTerm.toLowerCase();
+            return (
+                item.product.name.toLowerCase().includes(term) ||
+                item.product.brand.toLowerCase().includes(term)
+            );
+        }
+
+        return true;
+    });
+
     if (!user) {
         return (
             <>
                 <Header
                     searchTerm={searchTerm}
                     onSearch={setSearchTerm}
-                    activeCategory={null}
-                    onCategoryChange={() => { }}
+                    activeCategory={activeCategory}
+                    onCategoryChange={setActiveCategory}
                 />
                 <div className="page-container">
                     <div className="empty-state">
@@ -88,8 +109,8 @@ export default function CartPage() {
             <Header
                 searchTerm={searchTerm}
                 onSearch={setSearchTerm}
-                activeCategory={null}
-                onCategoryChange={() => { }}
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
             />
 
             <div className="page-container">
@@ -111,66 +132,76 @@ export default function CartPage() {
                 ) : (
                     <div className="cart-layout">
                         <div className="cart-items">
-                            {cartItems.map((item) => (
-                                <div key={item._id} className="cart-item">
-                                    <div className="cart-item-img">
-                                        {item.product?.images[0] ? (
-                                            <img
-                                                src={item.product.images[0]}
-                                                alt={item.product.name}
-                                            />
-                                        ) : (
-                                            <span>🎮</span>
-                                        )}
-                                    </div>
-
-                                    <div className="cart-item-details">
-                                        <Link
-                                            href={`/product/${item.productId}`}
-                                            className="cart-item-name"
-                                            style={{ textDecoration: "none", color: "inherit" }}
-                                        >
-                                            {item.product?.name}
-                                        </Link>
-                                        <p className="cart-item-brand">{item.product?.brand}</p>
-                                        <p className="cart-item-price">
-                                            {item.product && formatPrice(item.product.price)}
-                                        </p>
-
-                                        <div className="quantity-control">
-                                            <button
-                                                onClick={() =>
-                                                    handleQuantityChange(
-                                                        item._id,
-                                                        item.quantity - 1
-                                                    )
-                                                }
-                                            >
-                                                −
-                                            </button>
-                                            <span>{item.quantity}</span>
-                                            <button
-                                                onClick={() =>
-                                                    handleQuantityChange(
-                                                        item._id,
-                                                        item.quantity + 1
-                                                    )
-                                                }
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        className="cart-item-remove"
-                                        onClick={() => handleRemove(item._id)}
-                                        title="Remove item"
-                                    >
-                                        ✕
-                                    </button>
+                            {filteredCartItems?.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">🔍</div>
+                                    <h3>No items match your filter</h3>
+                                    <p>Try clearing your search or category filter.</p>
                                 </div>
-                            ))}
+                            ) : (
+                                filteredCartItems?.map((item) => (
+                                    <div key={item._id} className="cart-item">
+                                        <div className="cart-item-img">
+                                            {item.product?.images[0] ? (
+                                                <img
+                                                    src={item.product.images[0]}
+                                                    alt={item.product.name}
+                                                />
+                                            ) : (
+                                                <span>🎮</span>
+                                            )}
+                                        </div>
+
+                                        <div className="cart-item-details">
+                                            <Link
+                                                href={`/product/${item.productId}`}
+                                                className="cart-item-name"
+                                                style={{ textDecoration: "none", color: "inherit" }}
+                                            >
+                                                {item.product?.name}
+                                            </Link>
+                                            <p className="cart-item-brand">{item.product?.brand}</p>
+                                            <p className="cart-item-price">
+                                                {item.product && formatPrice(item.product.price)}
+                                            </p>
+
+                                            <div className="quantity-control">
+                                                <button
+                                                    onClick={() =>
+                                                        handleQuantityChange(
+                                                            item._id,
+                                                            item.quantity - 1
+                                                        )
+                                                    }
+                                                >
+                                                    −
+                                                </button>
+                                                <span>{item.quantity}</span>
+                                                <button
+                                                    onClick={() =>
+                                                        handleQuantityChange(
+                                                            item._id,
+                                                            item.quantity + 1
+                                                        )
+                                                    }
+                                                    disabled={item.quantity >= (item.product?.stock || 0)}
+                                                    title={item.quantity >= (item.product?.stock || 0) ? "Max stock reached" : ""}
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className="cart-item-remove"
+                                            onClick={() => handleRemove(item._id)}
+                                            title="Remove item"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))
+                            )}
                         </div>
 
                         <div className="order-summary">

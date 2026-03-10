@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "../../../lib/api";
 import { Product } from "../../../lib/types";
 import { useAuth } from "../../AuthContext";
@@ -20,6 +21,7 @@ export default function ProductDetailPage({
 }) {
     const { id } = use(params);
     const { user } = useAuth();
+    const router = useRouter();
     const [showAuth, setShowAuth] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +45,25 @@ export default function ProductDetailPage({
             window.dispatchEvent(new Event("cartUpdated"));
             setToast("Added to cart!");
             setTimeout(() => setToast(null), 3000);
+        } catch (err: unknown) {
+            setToast(err instanceof Error ? err.message : "Error adding to cart");
+            setTimeout(() => setToast(null), 3000);
+        }
+    };
+
+    const handleBuyNow = async () => {
+        if (!user) {
+            setShowAuth(true);
+            return;
+        }
+        try {
+            await api.cart.add({
+                userId: user.userId,
+                productId: id,
+                quantity: 1,
+            });
+            window.dispatchEvent(new Event("cartUpdated"));
+            router.push("/checkout");
         } catch (err: unknown) {
             setToast(err instanceof Error ? err.message : "Error adding to cart");
             setTimeout(() => setToast(null), 3000);
@@ -189,7 +210,7 @@ export default function ProductDetailPage({
                             </button>
                             <button
                                 className="btn-buy-now"
-                                onClick={handleAddToCart}
+                                onClick={handleBuyNow}
                                 disabled={product.stock === 0}
                             >
                                 Buy Now

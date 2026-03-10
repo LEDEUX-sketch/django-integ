@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "../lib/api";
 import { Product } from "../lib/types";
 import Header from "./Header";
 import ProductCard from "./ProductCard";
 import Footer from "./Footer";
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [seeded, setSeeded] = useState(false);
@@ -16,6 +18,19 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[] | undefined>(undefined);
   const [flashSaleProducts, setFlashSaleProducts] = useState<Product[] | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<Product[] | undefined>(undefined);
+
+  // Sync with URL params
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    const search = searchParams.get("search");
+
+    if (cat !== null) {
+      setActiveCategory(cat === "" ? null : cat);
+    }
+    if (search !== null) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   // Fetch products
   const fetchProducts = useCallback(() => {
@@ -36,7 +51,8 @@ export default function Home() {
 
   // Auto-seed if DB is empty
   useEffect(() => {
-    if (allProducts && allProducts.length === 0 && !seeded) {
+    // Only check if DB is empty when NOT filtering by category
+    if (!activeCategory && allProducts && allProducts.length === 0 && !seeded) {
       api.seed().then(() => {
         setSeeded(true);
         fetchProducts();
@@ -44,7 +60,7 @@ export default function Home() {
         api.products.getFlashSale().then(setFlashSaleProducts);
       });
     }
-  }, [allProducts, seeded, fetchProducts]);
+  }, [allProducts, seeded, fetchProducts, activeCategory]);
 
   // Search
   useEffect(() => {
@@ -191,5 +207,13 @@ export default function Home() {
 
       <Footer />
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

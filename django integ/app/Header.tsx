@@ -5,6 +5,7 @@ import { useAuth } from "./AuthContext";
 import { api } from "../lib/api";
 import AuthModal from "./AuthModal";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 const CATEGORIES = [
     { key: null, label: "All" },
@@ -27,12 +28,16 @@ export default function Header({
     onCategoryChange: (cat: string | null) => void;
 }) {
     const { user, logout } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
     const [showAuth, setShowAuth] = useState(false);
     const [cartCount, setCartCount] = useState<number>(0);
 
+    const isHomePage = pathname === "/";
+
     useEffect(() => {
         if (!user) { setCartCount(0); return; }
-        
+
         const fetchCartCount = () => {
             api.cart.getCount(user.userId).then(setCartCount).catch(() => setCartCount(0));
         };
@@ -41,6 +46,20 @@ export default function Header({
         window.addEventListener("cartUpdated", fetchCartCount);
         return () => window.removeEventListener("cartUpdated", fetchCartCount);
     }, [user]);
+
+    const handleCategoryClick = (key: string | null) => {
+        if (isHomePage || pathname === "/cart") {
+            onCategoryChange(key);
+        } else {
+            router.push(`/?category=${key || ""}`);
+        }
+    };
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && !isHomePage && pathname !== "/cart") {
+            router.push(`/?search=${encodeURIComponent(searchTerm)}`);
+        }
+    };
 
     return (
         <>
@@ -70,8 +89,16 @@ export default function Header({
                             placeholder="Search action figures, statues, model kits..."
                             value={searchTerm}
                             onChange={(e) => onSearch(e.target.value)}
+                            onKeyDown={handleSearchKeyDown}
                         />
-                        <button type="button">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!isHomePage && pathname !== "/cart") {
+                                    router.push(`/?search=${encodeURIComponent(searchTerm)}`);
+                                }
+                            }}
+                        >
                             <svg
                                 width="18"
                                 height="18"
@@ -144,7 +171,7 @@ export default function Header({
                         <button
                             key={cat.key ?? "all"}
                             className={`category-link ${activeCategory === cat.key ? "active" : ""}`}
-                            onClick={() => onCategoryChange(cat.key)}
+                            onClick={() => handleCategoryClick(cat.key)}
                         >
                             {cat.label}
                         </button>

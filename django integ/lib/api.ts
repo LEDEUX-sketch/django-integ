@@ -3,6 +3,7 @@ const API_BASE = "http://127.0.0.1:8000/api";
 async function request(path: string, options?: RequestInit) {
     const res = await fetch(`${API_BASE}${path}`, {
         headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
+        cache: "no-store",
         ...options,
     });
     if (!res.ok) {

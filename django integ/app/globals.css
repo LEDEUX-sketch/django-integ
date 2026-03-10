@@ -27,23 +27,23 @@
   --accent-red: #ef4444;
 
   /* Borders */
-  --border-light: #e8e8e8;
+  --border-light: #e0e0e0;
   --border-hover: #ee4d2d;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --shadow-hover: 0 8px 25px rgba(238, 77, 45, 0.15);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.08); /* Softer, layered */
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 16px 35px rgba(238, 77, 45, 0.2);
 
   /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 
   /* Transitions */
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Fonts */
   --font-body: "Inter", var(--font-geist-sans), system-ui, sans-serif;
@@ -72,11 +72,13 @@ body {
 
 /* ===== HEADER ===== */
 .header {
-  background: var(--bg-header);
+  background: linear-gradient(135deg, rgba(238, 77, 45, 0.95) 0%, rgba(255, 102, 51, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(238, 77, 45, 0.3);
+  box-shadow: 0 4px 20px rgba(238, 77, 45, 0.25);
 }
 
 .header-top {
@@ -193,6 +195,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5); }
+  60% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
 }
 
 /* ===== CATEGORIES BAR ===== */
@@ -465,9 +474,9 @@ body {
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.01);
   box-shadow: var(--shadow-hover);
-  border-color: var(--primary);
+  border-color: var(--primary-light);
 }
 
 .product-card-img {
@@ -679,6 +688,8 @@ body {
 
 .btn-primary:hover {
   background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3);
 }
 
 .btn-primary:disabled {
