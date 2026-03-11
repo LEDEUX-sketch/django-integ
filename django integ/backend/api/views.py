@@ -86,7 +86,22 @@ def sign_in(request):
         return Response({'error': 'Your account has been banned. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
 
     if user.status == 'suspended':
-        return Response({'error': 'Your account has been suspended. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
+        # Auto-reactivate if suspension has expired
+        if user.suspended_until and timezone.now() >= user.suspended_until:
+            user.status = 'active'
+            user.suspended_until = None
+            user.save()
+        else:
+            remaining = ''
+            if user.suspended_until:
+                diff = user.suspended_until - timezone.now()
+                hours = int(diff.total_seconds() // 3600)
+                mins = int((diff.total_seconds() % 3600) // 60)
+                if hours > 0:
+                    remaining = f' Suspension expires in {hours}h {mins}m.'
+                else:
+                    remaining = f' Suspension expires in {mins} minutes.'
+            return Response({'error': f'Your account has been suspended.{remaining} Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
 
     return Response({
         'userId': str(user.id),
@@ -134,14 +149,22 @@ def list_users(request):
     users = User.objects.all().order_by('-id')
     data = []
     for u in users:
-        data.append({
+        # Auto-reactivate expired suspensions
+        if u.status == 'suspended' and u.suspended_until and timezone.now() >= u.suspended_until:
+            u.status = 'active'
+            u.suspended_until = None
+            u.save()
+        entry = {
             '_id': str(u.id),
             'name': u.name,
             'email': u.email,
             'role': u.role,
             'status': u.status,
             'createdAt': u.created_at.timestamp() * 1000,  # milliseconds like JS Date.now()
-        })
+        }
+        if u.suspended_until:
+            entry['suspendedUntil'] = u.suspended_until.timestamp() * 1000
+        data.append(entry)
     return Response(data)
 
 
@@ -171,12 +194,24 @@ def unban_user(request, user_id):
 
 @api_view(['POST'])
 def suspend_user(request, user_id):
+    from datetime import timedelta
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
     if user.role == 'admin':
         return Response({'error': 'Cannot suspend an admin user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    duration_hours = request.data.get('durationHours')
+    if duration_hours is not None:
+        try:
+            duration_hours = float(duration_hours)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid duration.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.suspended_until = timezone.now() + timedelta(hours=duration_hours)
+    else:
+        user.suspended_until = None  # indefinite
+
     user.status = 'suspended'
     user.save()
     return Response({'success': True})
@@ -189,6 +224,7 @@ def reactivate_user(request, user_id):
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
     user.status = 'active'
+    user.suspended_until = None
     user.save()
     return Response({'success': True})
 

@@ -33,8 +33,8 @@ export const api = {
             request(`/users/${userId}/ban/`, { method: "POST", body: JSON.stringify({}) }),
         unbanUser: (userId: string) =>
             request(`/users/${userId}/unban/`, { method: "POST", body: JSON.stringify({}) }),
-        suspendUser: (userId: string) =>
-            request(`/users/${userId}/suspend/`, { method: "POST", body: JSON.stringify({}) }),
+        suspendUser: (userId: string, durationHours?: number) =>
+            request(`/users/${userId}/suspend/`, { method: "POST", body: JSON.stringify({ durationHours }) }),
         reactivateUser: (userId: string) =>
             request(`/users/${userId}/reactivate/`, { method: "POST", body: JSON.stringify({}) }),
     },

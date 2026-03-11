@@ -16,6 +16,7 @@ class User(models.Model):
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    suspended_until = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
