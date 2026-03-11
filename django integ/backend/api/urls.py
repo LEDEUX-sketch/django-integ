@@ -39,6 +39,8 @@ urlpatterns = [
     path('orders/place/', views.place_order, name='place_order'),
     path('orders/', views.orders_by_user, name='orders_by_user'),
     path('orders/<int:order_id>/update/', views.update_order_status, name='update_order_status'),
+    path('orders/<int:order_id>/confirm-received/', views.confirm_received, name='confirm_received'),
+    path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
 
     # Seed
     path('seed/', views.seed_products, name='seed_products'),

@@ -142,9 +142,9 @@ export default function Header({
                                     )}
                                 </Link>
 
-                                <span className="header-btn" style={{ cursor: "default" }}>
+                                <Link href="/orders" className="header-btn" style={{ cursor: "pointer" }}>
                                     Hi, {user.name.split(" ")[0]}
-                                </span>
+                                </Link>
 
                                 <button className="header-btn" onClick={logout}>
                                     Sign Out

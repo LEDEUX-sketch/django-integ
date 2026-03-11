@@ -74,6 +74,12 @@ export const api = {
         place: (data: { userId: string; shippingAddress: Record<string, string> }) =>
             request("/orders/place/", { method: "POST", body: JSON.stringify(data) }),
         getByUser: (userId: string) => request(`/orders/?userId=${userId}`),
+        confirmReceived: (orderId: string | number, userId: string) =>
+            request(`/orders/${orderId}/confirm-received/`, { method: "POST", body: JSON.stringify({ userId }) }),
+        cancelOrder: (orderId: string | number, userId: string) =>
+            request(`/orders/${orderId}/cancel/`, { method: "POST", body: JSON.stringify({ userId }) }),
+        updateStatus: (orderId: string | number, newStatus: string) =>
+            request(`/orders/${orderId}/update/`, { method: "PUT", body: JSON.stringify({ status: newStatus }) }),
     },
 
     // ─── Seed ───
