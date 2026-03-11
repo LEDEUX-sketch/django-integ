@@ -66,7 +66,7 @@ Ensure you have the following installed:
    ```
 3. Install the required Python packages:
    ```bash
-   pip install django mysqlclient djangorestframework django-cors-headers
+   pip install django==4.2 mysqlclient djangorestframework django-cors-headers
    ```
 4. Run the database migrations to create the tables:
    ```bash

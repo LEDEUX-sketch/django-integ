@@ -55,6 +55,10 @@ export const api = {
             request(`/products/search/?searchTerm=${encodeURIComponent(searchTerm)}`),
         createProduct: (data: Record<string, unknown>) =>
             request("/products/create/", { method: "POST", body: JSON.stringify(data) }),
+        deleteProduct: (productId: string | number) =>
+            request(`/products/${productId}/delete/`, { method: "DELETE" }),
+        updateStock: (productId: string | number, stock: number) =>
+            request(`/products/${productId}/update/`, { method: "PUT", body: JSON.stringify({ stock }) }),
     },
 
     // ─── Cart ───
@@ -71,6 +75,7 @@ export const api = {
 
     // ─── Orders ───
     orders: {
+        getAll: () => request("/orders/all/"),
         place: (data: { userId: string; shippingAddress: Record<string, string> }) =>
             request("/orders/place/", { method: "POST", body: JSON.stringify(data) }),
         getByUser: (userId: string) => request(`/orders/?userId=${userId}`),

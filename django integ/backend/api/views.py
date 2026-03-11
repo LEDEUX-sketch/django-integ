@@ -527,6 +527,13 @@ def orders_by_user(request):
     return Response(OrderSerializer(orders, many=True).data)
 
 
+@api_view(['GET'])
+def list_orders(request):
+    """Admin: Get all orders across all users."""
+    orders = Order.objects.all().order_by('-created_at')[:200]
+    return Response(OrderSerializer(orders, many=True).data)
+
+
 @api_view(['PUT'])
 def update_order_status(request, order_id):
     try:

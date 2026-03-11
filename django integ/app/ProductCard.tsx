@@ -29,16 +29,40 @@ export default function ProductCard({
             : null;
 
     return (
-        <Link href={`/product/${product._id}`} className="product-card">
-            <div className="product-card-img">
+        <Link href={`/product/${product._id}`} className="product-card" style={{ position: "relative" }}>
+            <div className="product-card-img" style={{ position: "relative" }}>
                 {product.images[0] ? (
-                    <img src={product.images[0]} alt={product.name} />
+                    <img 
+                        src={product.images[0]} 
+                        alt={product.name} 
+                        style={product.stock <= 0 ? { filter: "blur(4px)", pointerEvents: "none" } : {}}
+                    />
                 ) : (
-                    <span className="product-placeholder">
+                    <span className="product-placeholder" style={product.stock <= 0 ? { filter: "blur(4px)", pointerEvents: "none" } : {}}>
                         {CATEGORY_EMOJI[product.category] || "🎮"}
                     </span>
                 )}
-                {discount && (
+
+                {product.stock <= 0 && (
+                    <div style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        background: "rgba(0,0,0,0.7)",
+                        color: "white",
+                        padding: "8px 16px",
+                        fontWeight: "bold",
+                        borderRadius: "4px",
+                        zIndex: 10,
+                        textTransform: "uppercase",
+                        letterSpacing: "1px"
+                    }}>
+                        Sold Out
+                    </div>
+                )}
+
+                {discount && product.stock > 0 && (
                     <span className="product-badge">{discount}% OFF</span>
                 )}
                 <span className="product-condition-badge">
