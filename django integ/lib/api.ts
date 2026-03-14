@@ -59,6 +59,8 @@ export const api = {
             request(`/products/${productId}/delete/`, { method: "DELETE" }),
         updateStock: (productId: string | number, stock: number) =>
             request(`/products/${productId}/update/`, { method: "PUT", body: JSON.stringify({ stock }) }),
+        addReview: (data: { userId: string; productId: string | number; rating: number; comment: string }) =>
+            request("/products/review/add/", { method: "POST", body: JSON.stringify(data) }),
     },
 
     // ─── Cart ───

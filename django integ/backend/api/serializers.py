@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Product, CartItem, Order
+from .models import User, Product, CartItem, Order, Review
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,9 +14,16 @@ class UserRegisterSerializer(serializers.Serializer):
     name = serializers.CharField()
 
 
-class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+class ReviewSerializer(serializers.ModelSerializer):
+    userName = serializers.CharField(source='user.name', read_only=True)
+    userId = serializers.IntegerField(source='user_id')
+    productId = serializers.IntegerField(source='product_id')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+    _id = serializers.IntegerField(source='id', read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['_id', 'userId', 'userName', 'productId', 'rating', 'comment', 'createdAt']
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -28,6 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
     flashSaleEnd = serializers.DateTimeField(source='flash_sale_end', allow_null=True, required=False)
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
     _id = serializers.IntegerField(source='id', read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -36,6 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'originalPrice', 'images', 'category', 'brand', 'series',
             'condition', 'stock', 'sold', 'rating', 'ratingCount',
             'tags', 'isFeatured', 'isFlashSale', 'flashSaleEnd', 'createdAt',
+            'reviews',
         ]
 
 

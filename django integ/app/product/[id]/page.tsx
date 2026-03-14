@@ -26,10 +26,32 @@ export default function ProductDetailPage({
     const [toast, setToast] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [product, setProduct] = useState<Product | null | undefined>(undefined);
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [hasPurchased, setHasPurchased] = useState(false);
+    const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
     useEffect(() => {
         api.products.getById(id).then(setProduct).catch(() => setProduct(null));
     }, [id]);
+
+    useEffect(() => {
+        if (user && product) {
+            // Check if purchased
+            api.orders.getByUser(user.userId).then((orders: any[]) => {
+                const bought = orders.some(order => 
+                    order.status === 'completed' && 
+                    order.items.some((item: any) => String(item.productId) === String(id))
+                );
+                setHasPurchased(bought);
+            });
+            
+            // Check if already reviewed
+            const reviewed = product.reviews?.some(r => String(r.userId) === String(user.userId));
+            setAlreadyReviewed(!!reviewed);
+        }
+    }, [user, product, id]);
 
     const handleAddToCart = async () => {
         if (!user) {
@@ -66,6 +88,36 @@ export default function ProductDetailPage({
             router.push("/checkout");
         } catch (err: unknown) {
             setToast(err instanceof Error ? err.message : "Error adding to cart");
+            setTimeout(() => setToast(null), 3000);
+        }
+    };
+
+    const handleReviewSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            setShowAuth(true);
+            return;
+        }
+        if (!comment.trim()) return;
+
+        setSubmitting(true);
+        try {
+            await api.products.addReview({
+                userId: user.userId,
+                productId: id,
+                rating,
+                comment,
+            });
+            setComment("");
+            setRating(5);
+            // Refresh product to show new review
+            const updated = await api.products.getById(id);
+            setProduct(updated);
+            setToast("Review submitted successfully!");
+        } catch (err: unknown) {
+            setToast(err instanceof Error ? err.message : "Failed to submit review");
+        } finally {
+            setSubmitting(false);
             setTimeout(() => setToast(null), 3000);
         }
     };
@@ -216,6 +268,68 @@ export default function ProductDetailPage({
                                 Buy Now
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <div className="product-reviews-section">
+                    <h2>Customer Reviews</h2>
+
+                    {user && hasPurchased && !alreadyReviewed && (
+                        <form onSubmit={handleReviewSubmit} className="review-form">
+                            <h3>Write a Review</h3>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                                You purchased this item. Share your experience!
+                            </p>
+                            <div className="rating-input">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <span
+                                        key={star}
+                                        onClick={() => setRating(star)}
+                                        style={{ cursor: 'pointer', fontSize: '1.5rem', transition: 'transform 0.1s' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        {star <= rating ? "⭐" : "☆"}
+                                    </span>
+                                ))}
+                            </div>
+                            <textarea
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder="Share your thoughts about this product..."
+                                required
+                            />
+                            <button type="submit" className="btn-primary" disabled={submitting} style={{ width: 'auto', padding: '10px 24px' }}>
+                                {submitting ? "Submitting..." : "Submit Review"}
+                            </button>
+                        </form>
+                    )}
+
+                    <div className="reviews-list">
+                        {product.reviews && product.reviews.length > 0 ? (
+                            product.reviews.map((review) => (
+                                <div key={review._id} className="review-card">
+                                    <div className="review-header">
+                                        <strong>{review.userName}</strong>
+                                        <span className="review-stars">
+                                            {"⭐".repeat(review.rating)}
+                                        </span>
+                                    </div>
+                                    <p className="review-comment">{review.comment}</p>
+                                    <small className="review-date">
+                                        {new Date(review.createdAt).toLocaleDateString("en-PH", {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })}
+                                    </small>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-state" style={{ padding: '20px 0' }}>
+                                <p>No reviews yet. Be the first to review this product!</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

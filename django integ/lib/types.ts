@@ -20,6 +20,17 @@ export type Product = {
     isFlashSale: boolean;
     flashSaleEnd?: string;
     createdAt: string;
+    reviews: Review[];
+};
+
+export type Review = {
+    _id: number;
+    userId: number;
+    userName: string;
+    productId: number;
+    rating: number;
+    comment: string;
+    createdAt: string;
 };
 
 export type CartItem = {
